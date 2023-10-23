@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinning Galaxy</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            height: 100vh;
+            background-color: black;
+        }
+        
+        #galaxyCanvas {
+            border: 1px solid white; /* Optional: just to show the canvas boundaries */
+        }
+
+        .canvasContainer {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="canvasContainer">
+        <canvas id="starfieldCanvas" width="800" height="600" style="position: absolute; z-index: 1;"></canvas>
+        <canvas id="starfieldCanvas" width="800" height="600" style="position: absolute; z-index: 2;"></canvas>
+        <canvas id="galaxyCanvas" width="800" height="600" style="position: absolute; z-index: 3;"></canvas>
+    </div>
+
+    <script>
+        // Constants
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 600;
+        const TWO_PI = Math.PI * 2;
+
+        // DOM Elements; Get canvas and context
+        const starfieldCanvas = document.getElementById('starfieldCanvas');
+        const nebulaCanvas = document.getElementById('nebulaCanvas');
+        const galaxyCanvas = document.getElementById('galaxyCanvas');
+        const starfieldCtx = starfieldCanvas.getContext('2d');
+        const galaxyCtx = galaxyCanvas.getContext('2d');
+
+        // Helper function for calculating coordinates
+        function calculateCoordinates(radius, angle, centerX, centerY) {
+            return {
+                x: centerX + radius * Math.cos(angle),
+                y: centerY + radius * Math.sin(angle)
+            };
+        }
+        // Collects both Random Stars and Predefined Stars in one call
+        function getAllStars() {
+            return [...predefinedStars, ...randomStars];
+}
+
+        // Function to get a random star color based on common star types
+        function getRandomStarColor() {
+            const types = ['red', 'orange', 'yellow', 'white', 'blue'];
+            const weights = [0.4, 0.3, 0.2, 0.08, 0.02];
+            let sum = 0;
+            const random = Math.random();
+
+            for (let i = 0; i < types.length; i++) {
+                sum += weights[i];
+                if (random < sum) {
+                    return types[i];
+                }
+            }
+            return 'white';
+        }
+        // Function to draw diffuse star field in background
+        function drawDiffuseStarfield() {
+        const numberOfStars = 1000;
+        for (let i = 0; i < numberOfStars; i++) {
+            const x = Math.random() * starfieldCanvas.width;
+            const y = Math.random() * starfieldCanvas.height;
+            const brightness = 0.2 + 0.3 * Math.random();
+            const color = `rgba(${255 * brightness}, ${255 * brightness}, ${240 * brightness}, 1)`;
+            starfieldCtx.fillStyle = color;
+            const size = .2 + Math.random() * 1;
+            starfieldCtx.fillRect(x, y, size, size);
+        }
+    }
+        // Function to generate stars in a spiral pattern
+        function generateGalaxy(starCount, arms) {
+            let starsData = [];
+            let nucleusStarCount = starCount / 0.75;
+            let nucleusRadius = CANVAS_WIDTH / 9;
+
+        // Generate nucleus stars
+        for (let i = 0; i < nucleusStarCount; i++) {
+            let angle = Math.random() * TWO_PI;
+            let randomFactor = Math.random();
+            let radius = Math.sqrt(1 - randomFactor) * nucleusRadius;
+            let coords = calculateCoordinates(radius, angle, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+            let size = randomFactor * 1 + 0.5;
+            let color = getRandomStarColor();
+            starsData.push({ ...coords, size, color });
+        }
+
+        // Generate spiral arm stars
+        for (let i = 0; i < starCount; i++) {
+            for (let j = 0; j < arms; j++) {
+                let angle = (i / starCount) * TWO_PI + (TWO_PI / arms) * j;
+                let spiralFactor = i / starCount;
+                let taperFactor = Math.pow(spiralFactor, 1.5);
+                let randomOffset = (1 - taperFactor) * (Math.random() * 150 - 50);
+                let radius = taperFactor * CANVAS_WIDTH / 3 + randomOffset;
+                let coords = calculateCoordinates(radius, angle, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+                let size = Math.random() * Math.random() * 2 * (1 - taperFactor) + 0.5;
+                let color = getRandomStarColor();
+                starsData.push({ ...coords, size, color });
+            }
+        }
+
+        return starsData;
+    }
+
+    // Predefined stars - Add your custom stars here
+    let predefinedStars = [
+        {x: galaxyCanvas.width / 2 + 50, y: galaxyCanvas.height / 2, size: 1, color: 'blue', id: 'star1'},
+        //{x: 100, y: 150, size: 1, color: 'blue', id: 'star1'},
+        //{x: 100, y: 150, size: 1, color: 'red', id: 'star2'},
+        //{x: 100, y: 150, size: 1, color: 'white', id: 'star3'},
+        // ...other predefined stars
+    ];
+
+    // Combine predefined and random stars
+    let randomStars = generateGalaxy(1000, 4);  // Now with 4 spiral arms
+
+    function drawGalaxyGradient() {
+        // Define the center of the gradient
+        let x = galaxyCanvas.width / 2;
+        let y = galaxyCanvas.height / 2;
+
+        // Define the radius of the entire gradient
+        let outerRadius = Math.sqrt((galaxyCanvas.width * galaxyCanvas.width) + (galaxyCanvas.height * galaxyCanvas.height)) / 8;
+        
+        // Create the radial gradient
+        // You can adjust the inner radius (0 here) if you want to start the gradient from a certain radius outwards
+        let gradient = galaxyCtx.createRadialGradient(x, y, 0, x, y, outerRadius);
+
+        // Define color stops for the gradient
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)'); // Semi-transparent white
+        gradient.addColorStop(0.1, 'rgba(255, 255, 255, 0.8)');
+        gradient.addColorStop(0.2, 'rgba(240, 230, 140, 0.7)'); // Lighter yellow
+        gradient.addColorStop(0.3, 'rgba(255, 255, 0, 0.7)');
+        gradient.addColorStop(0.4, 'rgba(255, 165, 0, 0.6)'); // Lighter orange
+        gradient.addColorStop(0.5, 'rgba(255, 165, 0, 0.6)');
+        gradient.addColorStop(0.6, 'rgba(139, 69, 19, 0.5)'); // Darker orange, nearing brown
+        gradient.addColorStop(0.7, 'rgba(46, 46, 46, 0.4)'); // Lighter black, grayer
+        gradient.addColorStop(0.8, 'rgba(28, 28, 28, 0.3)'); // Dark gray
+        gradient.addColorStop(0.9, 'rgba(0, 0, 0, 0.2)'); // Nearing black
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)'); // Outer space, no stars
+
+        // Apply the gradient as a fill style
+        galaxyCtx.fillStyle = gradient;
+        galaxyCtx.fillRect(0, 0, galaxyCanvas.width, galaxyCanvas.height);
+}
+        // Animation variables
+        let angle = 0;
+
+        // Animation function
+        function animate() {
+        // Apply a semi-transparent "darkening layer" 
+        // This will slightly fade the previously drawn stars without erasing the background
+        galaxyCtx.fillStyle = 'rgba(0, 0, 0, 0.999)';  // Adjust the alpha for your preference
+        galaxyCtx.fillRect(0, 0, galaxyCanvas.width, galaxyCanvas.height);
+        galaxyCtx.clearRect(0, 0, galaxyCanvas.width, galaxyCanvas.height);
+
+        galaxyCtx.save();
+        galaxyCtx.translate(galaxyCanvas.width / 2, galaxyCanvas.height / 2);
+        galaxyCtx.rotate(angle);
+        galaxyCtx.translate(-galaxyCanvas.width / 2, -galaxyCanvas.height / 2);
+        
+        // Drawing stars using starsData (both nucleus and spiral stars)
+        getAllStars().forEach((star) => {
+            galaxyCtx.fillStyle = star.color;
+            galaxyCtx.beginPath();
+            galaxyCtx.arc(star.x, star.y, star.size, 0, TWO_PI, false);
+            galaxyCtx.fill();
+        });
+        
+        galaxyCtx.restore();
+        angle -= 0.0002;
+        requestAnimationFrame(animate);
+    }
+    
+    // Entry Point function
+    const init = () => {
+        drawDiffuseStarfield();
+        animate();    
+    };
+
+    init();
+
+    /* Interaction: Show image on hover over predefined star
+    canvas.addEventListener('mousemove', function(event) {
+        let rect = canvas.getBoundingClientRect();
+        let mouseX = event.clientX - rect.left;
+        let mouseY = event.clientY - rect.top;
+        
+        predefinedStars.forEach(star => {
+            let distance = Math.sqrt((star.x - mouseX)**2 + (star.y - mouseY)**2);
+            if (distance < star.size) {
+                showImage(star);  // Define this function to show an image
+            }
+        });
+    });
+    */ 
+
+    /* Function to show image - Customize this function as needed
+    function showImage(star) {
+        console.log('Hovered over star with id:', star.id);
+        // Your code to display an image or other information related to the star
+    }
+    */
+
+</script>
+</body>
+</html>
