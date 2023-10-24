@@ -13,6 +13,13 @@
             overflow: hidden;
             height: 100vh;
             background-color: black;
+            flex-direction: column;
+        }
+
+        .canvasContainer {
+        position: absolute;
+        width: 100vw;
+        height: 100vh;
         }
         
         #galaxyCanvas {
@@ -32,7 +39,7 @@
 </head>
 <body>
 
-    <div class="canvasContainer">
+    <div class="canvasContainer", id="canvasContainer">
         <canvas id="starfieldCanvas" width="1600" height="1200" style="position: absolute; z-index: 1;"></canvas>
         <canvas id="galaxyCanvas" width="1600" height="1200" style="position: absolute; z-index: 2;"></canvas>
     </div>
@@ -59,7 +66,7 @@
 
         // Function to get a random star color based on common star types
         function getRandomStarColor() {
-            const types = ['red', 'orange', 'yellow', 'white', 'blue'];
+            const types = ['#94D0FF', '#AEEEEE', '#7F00FF']; // Light Blue, Turquoise, Purple
             const weights = [0.4, 0.3, 0.2, 0.08, 0.02];
             let sum = 0;
             const random = Math.random();
@@ -97,7 +104,7 @@
             let randomFactor = Math.random();
             let radius = Math.sqrt(1 - randomFactor) * nucleusRadius;
             let coords = calculateCoordinates(radius, angle, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
-            let size = randomFactor * 1 + 0.5;
+            let size = randomFactor * 0.75 + 0.5;
             let color = getRandomStarColor();
             starsData.push({ ...coords, size, color });
         }
@@ -135,25 +142,28 @@
 
     function drawGalaxyGradient() {
         // Define the center of the gradient
-        let x = galaxyCanvas.width / 2;
-        let y = galaxyCanvas.height / 2;
+        let x = starfieldCanvas.width / 2;
+        let y = starfieldCanvas.height / 2;
 
         // Define the radius of the entire gradient
-        let outerRadius = Math.sqrt((galaxyCanvas.width * galaxyCanvas.width) + (galaxyCanvas.height * galaxyCanvas.height)) / 2;
+        let outerRadius = Math.sqrt((starfieldCanvas.width * starfieldCanvas.width) + (starfieldCanvas.height * starfieldCanvas.height)) / 8;
         
         // Create the radial gradient
         // You can adjust the inner radius (0 here) if you want to start the gradient from a certain radius outwards
-        let gradient = galaxyCtx.createRadialGradient(x, y, 0, x, y, outerRadius);
+        let gradient = starfieldCtx.createRadialGradient(x, y, 0, x, y, outerRadius);
 
         // Define color stops for the gradient
-        gradient.addColorStop(0, 'white'); // Center of the galaxy, brightest stars
-        gradient.addColorStop(0.3, 'yellow'); 
-        gradient.addColorStop(0.6, 'orange');
-        gradient.addColorStop(1, 'black'); // Outer space, no stars
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)'); // Semi-transparent white
+        gradient.addColorStop(0.1, 'rgba(0, 191, 255, 0.1)');
+        gradient.addColorStop(0.3, 'rgba(0, 0, 128, 0.1)');
+        gradient.addColorStop(0.4, 'rgba(46, 46, 46, 0.1)'); // Lighter black, grayer
+        gradient.addColorStop(0.6, 'rgba(28, 28, 28, 0.1)'); // Dark gray
+        gradient.addColorStop(0.9, 'rgba(0, 0, 0, 0.1)'); // Nearing black
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)'); // Outer space, no stars
 
         // Apply the gradient as a fill style
-        galaxyCtx.fillStyle = gradient;
-        galaxyCtx.fillRect(0, 0, galaxyCanvas.width, galaxyCanvas.height);
+        starfieldCtx.fillStyle = gradient;
+        starfieldCtx.fillRect(0, 0, starfieldCanvas.width, starfieldCanvas.height);
 }
 
     function drawStars(context) {
@@ -178,13 +188,15 @@
 
         // Animation function
         function animate() {
+            drawDiffuseStarfield();
             drawGalaxyGradient();
+            galaxyCtx.save()
             galaxyCtx.clearRect(0, 0, galaxyCanvas.width, galaxyCanvas.height);
             galaxyCtx.save();
             galaxyCtx.translate(galaxyCanvas.width / 2, galaxyCanvas.height / 2);
             galaxyCtx.rotate(angle);
             galaxyCtx.translate(-galaxyCanvas.width / 2, -galaxyCanvas.height / 2);
-            
+
             // Drawing stars using starsData (both nucleus and spiral stars)
             allStars.forEach(star => {
                 galaxyCtx.fillStyle = star.color;
@@ -200,6 +212,7 @@
     // Entry Point function
     const init = () => {
     drawDiffuseStarfield();
+    drawGalaxyGradient();
     animate();    
     };
 
